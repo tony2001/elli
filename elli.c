@@ -221,9 +221,14 @@ PHP_MINIT_FUNCTION(elli)
 	elli_handlers.offset = XtOffsetOf(elli_obj_t, zo);
 	//set custom obj dtor handler
 	elli_handlers.free_obj = elli_free_object;
+	//disallow cloning
+	elli_handlers.clone_obj = 0;
 
 	//create class entry
 	elli_ce = zend_register_internal_class(&ce);
+	//make the class final, we don't want other classes to extend it
+	elli_ce->ce_flags |= ZEND_ACC_FINAL;
+
 	return SUCCESS;
 }
 /* }}} */
