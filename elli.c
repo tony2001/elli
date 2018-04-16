@@ -153,9 +153,32 @@ PHP_METHOD(Elli, getCurve)
 }
 /* }}} */
 
+/* Elli::encrypt() {{{ */
+PHP_METHOD(Elli, encrypt)
+{
+	char *public_key, *data;
+	size_t public_key_len, data_len;
+	elli_obj_t *obj = Z_ELLI_OBJ_P(getThis());
+
+	ZEND_PARSE_PARAMETERS_START(2, 2)
+		Z_PARAM_STRING(public_key, public_key_len)
+		Z_PARAM_STRING(data, data_len)
+	ZEND_PARSE_PARAMETERS_END();
+
+	char *encrypted = elli_encrypt(obj->ctx, public_key, data, &data_len);
+	if (!encrypted) {
+		zend_throw_exception_ex(zend_ce_exception, 0, "Failed to encrypt data: %s", elli_ctx_last_error(obj->ctx));
+		return;
+	}
+	RETVAL_STRINGL(encrypted, data_len);
+	free(encrypted);
+}
+/* }}} */
+
 static zend_function_entry elli_methods[] = {
 	PHP_ME(Elli, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(Elli, getCurve, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(Elli, encrypt, NULL, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
