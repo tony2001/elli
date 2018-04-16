@@ -10,6 +10,8 @@
 
 #include <elli.h>
 
+static zend_class_entry *elli_ce;
+
 /* {{{ string elli_encrypt(string curve, string public_key, string data)
  */
 PHP_FUNCTION(elli_encrypt)
@@ -72,6 +74,36 @@ PHP_FUNCTION(elli_decrypt)
 }
 /* }}} */
 
+/* Elli::__construct(string curve) */
+PHP_METHOD(Elli, __construct)
+{
+	char *curve;
+	size_t curve_len;
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_STRING(curve, curve_len)
+	ZEND_PARSE_PARAMETERS_END();
+
+	php_printf("Initialized with '%s' curve\r\n", curve);
+}
+/* }}} */
+
+static zend_function_entry elli_methods[] = {
+	PHP_ME(Elli, __construct, NULL, ZEND_ACC_PUBLIC)
+	PHP_FE_END
+};
+
+/* {{{ PHP_MINIT_FUNCTION
+*/
+PHP_MINIT_FUNCTION(elli)
+{
+	zend_class_entry ce;
+
+	INIT_CLASS_ENTRY(ce, "Elli", elli_methods);
+	elli_ce = zend_register_internal_class(&ce);
+}
+/* }}} */
+
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
@@ -109,7 +141,7 @@ zend_module_entry elli_module_entry = {
 	STANDARD_MODULE_HEADER,
 	"elli",					/* Extension name */
 	elli_functions,			/* zend_function_entry */
-	NULL,							/* PHP_MINIT - Module initialization */
+	PHP_MINIT(elli),		/* PHP_MINIT - Module initialization */
 	NULL,							/* PHP_MSHUTDOWN - Module shutdown */
 	PHP_RINIT(elli),			/* PHP_RINIT - Request initialization */
 	NULL,							/* PHP_RSHUTDOWN - Request shutdown */
