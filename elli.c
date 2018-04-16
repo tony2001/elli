@@ -10,6 +10,22 @@
 
 #include <elli.h>
 
+/* {{{ string elli_encrypt(string curve, string public_key, string data)
+ */
+PHP_FUNCTION(elli_encrypt)
+{
+	char *curve, *key, *data;
+	size_t curve_len, key_len, data_len;
+
+	ZEND_PARSE_PARAMETERS_START(3, 3)
+		Z_PARAM_STRING(curve, curve_len)
+		Z_PARAM_STRING(key, key_len)
+		Z_PARAM_STRING(data, data_len)
+	ZEND_PARSE_PARAMETERS_END();
+
+}
+/* }}} */
+
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
