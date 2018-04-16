@@ -23,6 +23,11 @@ PHP_FUNCTION(elli_encrypt)
 		Z_PARAM_STRING(data, data_len)
 	ZEND_PARSE_PARAMETERS_END();
 
+	elli_ctx_t *ctx = elli_ctx_create(curve, NULL);
+	if (!ctx) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to initialize Elli context");
+		RETURN_FALSE;
+	}
 }
 /* }}} */
 
