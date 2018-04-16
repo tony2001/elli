@@ -8,35 +8,6 @@
 #include "ext/standard/info.h"
 #include "php_elli.h"
 
-/* {{{ void elli_test1()
- */
-PHP_FUNCTION(elli_test1)
-{
-	ZEND_PARSE_PARAMETERS_NONE();
-
-	php_printf("The extension %s is loaded and working!\r\n", "elli");
-}
-/* }}} */
-
-/* {{{ string elli_test2( [ string $var ] )
- */
-PHP_FUNCTION(elli_test2)
-{
-	char *var = "World";
-	size_t var_len = sizeof("World") - 1;
-	zend_string *retval;
-
-	ZEND_PARSE_PARAMETERS_START(0, 1)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_STRING(var, var_len)
-	ZEND_PARSE_PARAMETERS_END();
-
-	retval = strpprintf(0, "Hello %s", var);
-
-	RETURN_STR(retval);
-}
-/* }}}*/
-
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
@@ -59,21 +30,9 @@ PHP_MINFO_FUNCTION(elli)
 }
 /* }}} */
 
-/* {{{ arginfo
- */
-ZEND_BEGIN_ARG_INFO(arginfo_elli_test1, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_elli_test2, 0)
-	ZEND_ARG_INFO(0, str)
-ZEND_END_ARG_INFO()
-/* }}} */
-
 /* {{{ elli_functions[]
  */
 static const zend_function_entry elli_functions[] = {
-	PHP_FE(elli_test1,		arginfo_elli_test1)
-	PHP_FE(elli_test2,		arginfo_elli_test2)
 	PHP_FE_END
 };
 /* }}} */
