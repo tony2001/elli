@@ -16,6 +16,7 @@ static zend_object_handlers elli_handlers;
 
 typedef struct _elli_obj {
 	elli_ctx_t *ctx;
+	char *curve;
 	zend_object zo;
 } elli_obj_t;
 
@@ -43,6 +44,10 @@ static void elli_free_object(zend_object *object) /* {{{ */
 
 	if (intern->ctx) {
 		elli_ctx_free(intern->ctx);
+	}
+
+	if (intern->curve) {
+		efree(intern->curve);
 	}
 
 	zend_object_std_dtor(&intern->zo);
@@ -128,11 +133,29 @@ PHP_METHOD(Elli, __construct)
 		free(err_str);
 		return;
 	}
+
+	/* store the name of the curve for demo purposes */
+	obj->curve = estrdup(curve);
+}
+/* }}} */
+
+/* Elli::getCurve() {{{ */
+PHP_METHOD(Elli, getCurve)
+{
+	elli_obj_t *obj = Z_ELLI_OBJ_P(getThis());
+
+	ZEND_PARSE_PARAMETERS_NONE();
+
+	if (!obj->curve) {
+		RETURN_FALSE;
+	}
+	RETURN_STRING(obj->curve);
 }
 /* }}} */
 
 static zend_function_entry elli_methods[] = {
 	PHP_ME(Elli, __construct, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(Elli, getCurve, NULL, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
