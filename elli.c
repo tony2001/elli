@@ -8,6 +8,8 @@
 #include "ext/standard/info.h"
 #include "php_elli.h"
 
+#include <elli.h>
+
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
