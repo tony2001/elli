@@ -34,7 +34,7 @@ PHP_FUNCTION(elli_encrypt)
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to encrypt data: %s", elli_ctx_last_error(ctx));
 		RETURN_FALSE;
 	}
-	RETURN_STRING(encrypted);
+	RETURN_STRINGL(encrypted, data_len);
 }
 /* }}} */
 
