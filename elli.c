@@ -41,33 +41,31 @@ PHP_FUNCTION(elli_ctx_create)
 }
 /* }}} */
 
-/* {{{ string elli_encrypt(string curve, string public_key, string data)
+/* {{{ string elli_encrypt(resource ctx, string public_key, string data)
  */
 PHP_FUNCTION(elli_encrypt)
 {
-	char *curve, *key, *data;
-	size_t curve_len, key_len, data_len;
+	zval *ctx;
+	char *key, *data;
+	size_t key_len, data_len;
 
 	ZEND_PARSE_PARAMETERS_START(3, 3)
-		Z_PARAM_STRING(curve, curve_len)
+		Z_PARAM_RESOURCE(ctx)
 		Z_PARAM_STRING(key, key_len)
 		Z_PARAM_STRING(data, data_len)
 	ZEND_PARSE_PARAMETERS_END();
 
-	elli_ctx_t *ctx = elli_ctx_create(curve, NULL);
-	if (!ctx) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to initialize Elli context");
+	php_elli_ctx_t *php_ctx = (php_elli_ctx_t *)zend_fetch_resource(Z_RES_P(ctx), "elli context", le_elli);
+	if (php_ctx == NULL) {
 		RETURN_FALSE;
 	}
 
-	char *encrypted = elli_encrypt(ctx, key, data, &data_len);
+	char *encrypted = elli_encrypt(php_ctx->ctx, key, data, &data_len);
 	if (!encrypted) {
-		elli_ctx_free(ctx);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to encrypt data: %s", elli_ctx_last_error(ctx));
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to encrypt data: %s", elli_ctx_last_error(php_ctx->ctx));
 		RETURN_FALSE;
 	}
 	RETVAL_STRINGL(encrypted, data_len);
-	elli_ctx_free(ctx);
 	free(encrypted);
 }
 /* }}} */
