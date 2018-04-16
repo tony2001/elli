@@ -10,6 +10,37 @@
 
 #include <elli.h>
 
+static int le_elli;
+
+typedef struct _php_elli_ctx {
+	elli_ctx_t *ctx;
+} php_elli_ctx_t;
+
+/* {{{ resource elli_ctx_create(string curve))
+ */
+PHP_FUNCTION(elli_ctx_create)
+{
+	char *curve, *err_str;
+	size_t curve_len;
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_STRING(curve, curve_len)
+	ZEND_PARSE_PARAMETERS_END();
+
+	elli_ctx_t *ctx = elli_ctx_create(curve, &err_str);
+	if (!ctx) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to initialize Elli context: %s", err_str);
+		free(err_str);
+		RETURN_FALSE;
+	}
+
+	php_elli_ctx_t *php_ctx = emalloc(sizeof(php_elli_ctx_t));
+	php_ctx->ctx = ctx;
+
+	RETURN_RES(zend_register_resource(php_ctx, le_elli));
+}
+/* }}} */
+
 /* {{{ string elli_encrypt(string curve, string public_key, string data)
  */
 PHP_FUNCTION(elli_encrypt)
@@ -72,6 +103,24 @@ PHP_FUNCTION(elli_decrypt)
 }
 /* }}} */
 
+static void elli_resource_dtor(zend_resource *rsrc) /* {{{ */
+{
+	php_elli_ctx_t *php_ctx = (php_elli_ctx_t *)rsrc->ptr;
+
+	elli_ctx_free(php_ctx->ctx);
+	efree(php_ctx);
+}
+/* }}} */
+
+/* PHP_MINIT_FUNCTION {{{
+ */
+PHP_MINIT_FUNCTION(elli)
+{
+    le_elli = zend_register_list_destructors_ex(elli_resource_dtor, NULL, "elli context", module_number);
+    return SUCCESS;
+}
+/* }}} */
+
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
@@ -97,6 +146,7 @@ PHP_MINFO_FUNCTION(elli)
 /* {{{ elli_functions[]
  */
 static const zend_function_entry elli_functions[] = {
+	PHP_FE(elli_ctx_create, NULL)
 	PHP_FE(elli_encrypt, NULL)
 	PHP_FE(elli_decrypt, NULL)
 	PHP_FE_END
@@ -109,7 +159,7 @@ zend_module_entry elli_module_entry = {
 	STANDARD_MODULE_HEADER,
 	"elli",					/* Extension name */
 	elli_functions,			/* zend_function_entry */
-	NULL,							/* PHP_MINIT - Module initialization */
+	PHP_MINIT(elli),		/* PHP_MINIT - Module initialization */
 	NULL,							/* PHP_MSHUTDOWN - Module shutdown */
 	PHP_RINIT(elli),			/* PHP_RINIT - Request initialization */
 	NULL,							/* PHP_RSHUTDOWN - Request shutdown */
