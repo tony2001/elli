@@ -6,11 +6,48 @@
 
 #include "php.h"
 #include "ext/standard/info.h"
+#include "zend_exceptions.h"
 #include "php_elli.h"
 
 #include <elli.h>
 
 static zend_class_entry *elli_ce;
+static zend_object_handlers elli_handlers;
+
+typedef struct _elli_obj {
+	elli_ctx_t *ctx;
+	zend_object zo;
+} elli_obj_t;
+
+static inline elli_obj_t *php_elli_fetch_object(zend_object *obj) {
+	return (elli_obj_t *)((char*)(obj) - XtOffsetOf(elli_obj_t, zo));
+}
+
+#define Z_ELLI_OBJ_P(zv) php_elli_fetch_object(Z_OBJ_P((zv)))
+
+static zend_object *elli_create_object(zend_class_entry *class_type) /* {{{ */
+{
+	elli_obj_t *intern = zend_object_alloc(sizeof(elli_obj_t), class_type);
+
+	zend_object_std_init(&intern->zo, class_type);
+	object_properties_init(&intern->zo, class_type);
+	intern->zo.handlers = &elli_handlers;
+
+	return &intern->zo;
+}
+/* }}} */
+
+static void elli_free_object(zend_object *object) /* {{{ */
+{
+	elli_obj_t *intern = php_elli_fetch_object(object);
+
+	if (intern->ctx) {
+		elli_ctx_free(intern->ctx);
+	}
+
+	zend_object_std_dtor(&intern->zo);
+}
+/* }}} */
 
 /* {{{ string elli_encrypt(string curve, string public_key, string data)
  */
@@ -74,17 +111,23 @@ PHP_FUNCTION(elli_decrypt)
 }
 /* }}} */
 
-/* Elli::__construct(string curve) */
+/* Elli::__construct(string curve) {{{ */
 PHP_METHOD(Elli, __construct)
 {
-	char *curve;
+	char *curve, *err_str;
 	size_t curve_len;
+	elli_obj_t *obj = Z_ELLI_OBJ_P(getThis());
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
 		Z_PARAM_STRING(curve, curve_len)
 	ZEND_PARSE_PARAMETERS_END();
 
-	php_printf("Initialized with '%s' curve\r\n", curve);
+	obj->ctx = elli_ctx_create(curve, &err_str);
+	if (!obj->ctx) {
+		zend_throw_exception_ex(zend_ce_exception, 0, "Failed to initialize Elli object: %s", err_str);
+		free(err_str);
+		return;
+	}
 }
 /* }}} */
 
@@ -100,7 +143,19 @@ PHP_MINIT_FUNCTION(elli)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "Elli", elli_methods);
+
+	//set custom obj create handler
+	ce.create_object = elli_create_object;
+	//initialize other handlers
+	memcpy(&elli_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	//offset has to be set since we use a custom object struct
+	elli_handlers.offset = XtOffsetOf(elli_obj_t, zo);
+	//set custom obj dtor handler
+	elli_handlers.free_obj = elli_free_object;
+
+	//create class entry
 	elli_ce = zend_register_internal_class(&ce);
+	return SUCCESS;
 }
 /* }}} */
 
