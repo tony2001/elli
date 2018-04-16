@@ -41,6 +41,37 @@ PHP_FUNCTION(elli_encrypt)
 }
 /* }}} */
 
+/* {{{ string elli_decrypt(string curve, string private_key, string data)
+ */
+PHP_FUNCTION(elli_decrypt)
+{
+	char *curve, *key, *data;
+	size_t curve_len, key_len, data_len;
+
+	ZEND_PARSE_PARAMETERS_START(3, 3)
+		Z_PARAM_STRING(curve, curve_len)
+		Z_PARAM_STRING(key, key_len)
+		Z_PARAM_STRING(data, data_len)
+	ZEND_PARSE_PARAMETERS_END();
+
+	elli_ctx_t *ctx = elli_ctx_create(curve, NULL);
+	if (!ctx) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to initialize Elli context");
+		RETURN_FALSE;
+	}
+
+	char *decrypted = elli_decrypt(ctx, key, data, &data_len);
+	if (!decrypted) {
+		elli_ctx_free(ctx);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to decrypt data: %s", elli_ctx_last_error(ctx));
+		RETURN_FALSE;
+	}
+	RETVAL_STRINGL(decrypted, data_len);
+	elli_ctx_free(ctx);
+	free(decrypted);
+}
+/* }}} */
+
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(elli)
@@ -67,6 +98,7 @@ PHP_MINFO_FUNCTION(elli)
  */
 static const zend_function_entry elli_functions[] = {
 	PHP_FE(elli_encrypt, NULL)
+	PHP_FE(elli_decrypt, NULL)
 	PHP_FE_END
 };
 /* }}} */
