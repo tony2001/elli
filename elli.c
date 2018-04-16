@@ -66,6 +66,7 @@ PHP_MINFO_FUNCTION(elli)
 /* {{{ elli_functions[]
  */
 static const zend_function_entry elli_functions[] = {
+	PHP_FE(elli_encrypt, NULL)
 	PHP_FE_END
 };
 /* }}} */
